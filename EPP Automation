@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Process Atlas — All-in-One Process Mapper (Single File)</title>
+
+<!-- ======== White UI with Professional Red Accents (No Emojis) ======== -->
+<style>
+  :root{
+    --bg:#ffffff; --panel:#ffffff; --panel-2:#f7f9fc; --muted:#5b657a; --text:#0b1221;
+    --accent:#e53935; --accent-2:#c62828; --accent-3:#ef5350;
+    --danger:#d32f2f; --warn:#f9a825; --ok:#2e7d32;
+    --blue:#1e88e5; --purple:#6a36ff; --cyan:#00acc1;
+    --border:#e5e8f0; --border-strong:#cfd6e4; --shadow: 0 6px 22px rgba(17,24,39,.08);
+    --ring: 0 0 0 3px rgba(229,57,53,.08); /* subtle red focus ring */
+    --grad-accent: linear-gradient(90deg, rgba(229,57,53,.16), rgba(229,57,53,0));
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+  }
+
+  /* Layout */
+  .app{display:grid; grid-template-columns: 320px 1fr; height:100vh}
+  aside{
+    background:linear-gradient(180deg,#ffffff,#fafbff 60%); border-right:1px solid var(--border);
+    padding:14px; display:flex; flex-direction:column; gap:10px; min-width:300px;
+  }
+  main{display:flex; flex-direction:column; min-width:0}
+
+  /* General UI */
+  .brand{display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px}
+  .brand .dot{width:14px; height:14px; border-radius:4px; background:var(--accent); box-shadow:0 0 0 3px rgba(229,57,53,.12)}
+  .muted{color:var(--muted)}
+  .row{display:flex; gap:8px; align-items:center}
+  .stack{display:flex; flex-direction:column; gap:8px}
+  .stack-lg{display:flex; flex-direction:column; gap:12px}
+
+  input,select,textarea{
+    width:100%; background:#fff; color:var(--text);
+    border:2px solid var(--border-strong); /* stronger outlines */
+    border-radius:10px; padding:10px 12px; outline:none; transition:border .12s, box-shadow .12s, background .12s;
+    box-shadow: inset 0 1px 0 rgba(17,24,39,.04);
+  }
+  input:hover,select:hover,textarea:hover{border-color:#b8c2d6}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent); box-shadow: var(--ring)}
+  textarea{resize:vertical}
+
+  .btn{
+    display:inline-flex; gap:8px; align-items:center; padding:8px 12px; border-radius:10px;
+    border:2px solid var(--border-strong); background:#fff; color:var(--text); cursor:pointer; user-select:none;
+    transition:transform .05s ease, border-color .12s, box-shadow .12s, background .12s;
+  }
+  .btn:hover{border-color:#b8c2d6; box-shadow:0 4px 16px rgba(17,24,39,.06)}
+  .btn:active{transform:translateY(1px)}
+  .btn.small{padding:6px 10px; font-size:12px}
+  .btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2)); color:#fff; border-color:transparent}
+  .btn.primary:hover{box-shadow:0 8px 20px rgba(229,57,53,.22)}
+  .btn.warn{background:linear-gradient(180deg,#ffd54f,var(--warn)); border-color:transparent; color:#111}
+  .btn.success{background:linear-gradient(180deg,#66bb6a,var(--ok)); border-color:transparent; color:#fff}
+  .btn.danger{background:linear-gradient(180deg,#ef5350,var(--danger)); border-color:transparent; color:#fff}
+
+  .pill{background:#fff; border:2px solid var(--border-strong); padding:6px 10px; border-radius:999px; font-size:12px}
+  .tag{border:2px solid var(--border-strong); padding:2px 8px; border-radius:999px; font-size:11px; color:var(--muted); background:#fff}
+  .badge{font-size:11px; padding:3px 8px; border-radius:999px; border:2px solid var(--border-strong); background:#fff}
+  .chip{padding:4px 8px; font-size:12px; border:2px dashed var(--border-strong); border-radius:999px; color:var(--muted); background:#fff}
+  .hint{color:var(--muted); font-size:12px}
+
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+  .divider{height:1px; background:var(--border); margin:8px 0}
+
+  .nav-title{font-weight:800; color:var(--muted); font-size:12px; letter-spacing:.15px; text-transform:uppercase}
+  .nav{display:flex; flex-direction:column; gap:8px; overflow:auto; padding-right:2px}
+  .nav .item:hover{border-color:#b8c2d6}
+  .list{display:flex; flex-direction:column; gap:6px; overflow:auto}
+
+  .item{display:flex; justify-content:space-between; gap:10px; align-items:center; padding:10px; background:#fff; border:2px solid var(--border-strong); border-radius:12px}
+  .item.active{outline:2px solid var(--accent); outline-offset:0}
+  .item .name{font-weight:700}
+
+  header{display:flex; gap:12px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--border); background:#fff; position:sticky; top:0; z-index:2}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap}
+  .tab{padding:8px 12px; border-radius:999px; border:2px solid var(--border-strong); background:#fff; cursor:pointer; font-weight:600}
+  .tab.active{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; color:var(--accent-2)}
+
+  .content{padding:14px; overflow:auto; display:flex; flex-direction:column; gap:14px}
+  .panel{border:2px solid var(--border-strong); background:#fff; border-radius:14px; padding:12px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow); position:relative}
+  .panel::before{content:""; position:absolute; left:0; top:0; right:0; height:4px; background:var(--grad-accent); border-top-left-radius:12px; border-top-right-radius:12px}
+  .panel h3{margin:0 0 4px 0; font-size:16px}
+
+  .section{background:var(--panel-2); border:2px dashed var(--border-strong); padding:10px; border-radius:12px; display:flex; flex-direction:column; gap:8px; position:relative}
+  .section::before{content:""; position:absolute; left:0; top:0; height:3px; width:100%; background:linear-gradient(90deg, #fbe9e7, #fff); border-top-left-radius:10px; border-top-right-radius:10px}
+  .card{border:2px solid var(--border-strong); background:#fff; border-radius:12px; padding:10px}
+
+  .grid{display:grid; grid-template-columns: repeat(12,1fr); gap:10px}
+  .col-12{grid-column:span 12} .col-6{grid-column:span 6} .col-4{grid-column:span 4}
+  .col-3{grid-column:span 3} .col-2{grid-column:span 2} .col-1{grid-column:span 1}
+
+  .cy-wrap{height:66vh; min-height:420px; border:2px solid var(--border-strong); border-radius:12px; overflow:hidden; background:var(--panel-2)}
+  .right{margin-left:auto}
+
+  .help{position:fixed; right:14px; bottom:14px; width:380px; max-width:92vw; max-height:72vh; overflow:auto; background:#fff; border:2px solid var(--border-strong); border-radius:14px; padding:12px; box-shadow:0 16px 40px rgba(0,0,0,.15); display:none}
+  .help.show{display:block}
+
+  .kbar{position:fixed; bottom:0; left:320px; right:0; display:flex; gap:8px; padding:10px 14px; background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.98))}
+  .k{border:2px solid var(--border-strong); background:#fff; border-radius:999px; padding:6px 10px; font-size:12px}
+
+  .srch input{padding-left:12px}
+
+  .log{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; white-space:pre-wrap; background:#fff; border:2px solid var(--border-strong); border-radius:10px; padding:8px; max-height:140px; overflow:auto}
+
+  .danger-text{color:var(--danger)} .ok-text{color:var(--ok)} .warn-text{color:var(--warn)}
+  .hidden{display:none}
+</style>
+
+<!-- ======== Libraries (CDN) ======== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/9.0.1/uuidv4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+<!-- Cytoscape + layouts + SVG export -->
+<script src="https://unpkg.com/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+<script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+<script src="https://unpkg.com/cytoscape-cose-bilkent@4.1.0/cytoscape-cose-bilkent.js"></script>
+<script src="https://unpkg.com/cytoscape-svg@2.1.2/cytoscape-svg.js"></script>
+<script>
+  if(window.cytoscape && window.cytoscape.use){
+    if(window.cytoscapeDagre) cytoscape.use(window.cytoscapeDagre);
+    if(window.cytoscapeCoseBilkent) cytoscape.use(window.cytoscapeCoseBilkent);
+    if(window.cytoscapeSvg) cytoscape.use(window.cytoscapeSvg);
+  }
+</script>
+
+<!-- PDF + Canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- ============ Sidebar ============ -->
+  <aside>
+    <div class="brand">
+      <span class="dot"></span><span>Process Atlas</span>
+      <span class="pill">Single-File</span>
+    </div>
+    <div class="stack">
+      <div class="srch">
+        <input id="searchInput" placeholder="Search departments, roles, tasks (Enter)" />
+      </div>
+      <div class="row">
+        <select id="personaSelect" class="grow">
+          <option value="admin">Persona: Admin</option>
+          <option value="deptHead">Persona: Dept Head</option>
+          <option value="operator">Persona: Operator</option>
+          <option value="viewer">Persona: Viewer (read-only)</option>
+        </select>
+        <button class="btn small" id="helpBtn" title="Help">Help</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary small" id="addDeptBtn">Add Department</button>
+        <button class="btn small" id="saveBtn" title="Ctrl/Cmd+S">Save</button>
+        <button class="btn small" id="undoBtn" title="Ctrl/Cmd+Z">Undo</button>
+        <button class="btn small" id="redoBtn" title="Ctrl/Cmd+Y">Redo</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="nav-title">Departments</div>
+    <div class="nav" id="deptList"></div>
+
+    <div class="divider"></div>
+    <div class="stack-lg">
+      <div class="stack">
+        <div class="nav-title">Data</div>
+        <div class="toolbar">
+          <button class="btn small" id="resetDemoBtn">Reset Demo</button>
+          <button class="btn warn small" id="startEmptyBtn">Start Empty</button>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="nav-title">JSON</div>
+        <div class="toolbar">
+          <button class="btn small" id="downloadJsonBtn">Download JSON</button>
+          <label class="btn small">
+            Upload JSON <input type="file" id="uploadJsonInput" accept="application/json" hidden />
+          </label>
+          <select id="uploadMode" title="Merge or Replace">
+            <option value="merge">Merge</option>
+            <option value="replace">Replace</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="nav-title">Webhook (optional)</div>
+        <div class="toolbar">
+          <button class="btn small" id="postDeptBtn">POST Dept</button>
+          <button class="btn small" id="postCompanyBtn">POST Company</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="stack">
+        <div class="nav-title">Logs</div>
+        <div id="log" class="log">Ready.</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ Main ============ -->
+  <main>
+    <header>
+      <input id="companyName" class="grow" placeholder="Company name…" />
+      <div class="tabs" id="tabs">
+        <div class="tab active" data-tab="form">Form</div>
+        <div class="tab" data-tab="tasks">Tasks</div>
+        <div class="tab" data-tab="handoffs">Handoffs</div>
+        <div class="tab" data-tab="flowchart">Flowchart</div>
+        <div class="tab" data-tab="roadmap">Roadmap</div>
+        <div class="tab" data-tab="exports">Exports</div>
+        <div class="tab" data-tab="settings">Settings</div>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <!-- ===== Form Tab ===== -->
+      <div id="tab-form" class="tab-pane">
+        <div class="panel">
+          <div class="row">
+            <h3>Department Form</h3>
+            <span class="hint">Dynamic sections. Add as many rows as needed.</span>
+            <span class="badge right">Inline validation</span>
+          </div>
+          <div id="noDeptHintForm" class="hint">Select or add a department from the left.</div>
+
+          <div id="deptFormWrap" class="hidden stack-lg">
+            <div class="grid">
+              <div class="col-6">
+                <label>Department Name (unique)</label>
+                <input id="deptName" placeholder="e.g., Operations" />
+              </div>
+              <div class="col-6">
+                <label>Notes</label>
+                <input id="deptNotes" placeholder="Optional notes…" />
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Sub-Departments</strong>
+                <button class="btn small right" id="addSubDeptBtn">Add</button>
+              </div>
+              <div id="subDeptList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Roles</strong>
+                <button class="btn small right" id="addRoleBtn">Add</button>
+              </div>
+              <div id="roleList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Tools & Systems</strong>
+                <button class="btn small right" id="addToolBtn">Add</button>
+              </div>
+              <div id="toolList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>KPIs & Success Measures</strong>
+                <button class="btn small right" id="addKpiBtn">Add</button>
+              </div>
+              <div id="kpiList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Pain Points</strong>
+                <button class="btn small right" id="addPainBtn">Add</button>
+              </div>
+              <div id="painList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Processes (Core)</strong>
+                <button class="btn small right" id="addProcessBtn">Add</button>
+              </div>
+              <div class="hint">Per process: trigger, steps, duration, frequency, priority, inputs/outputs, tools, RACI, dependencies.</div>
+              <div id="processList" class="stack"></div>
+            </div>
+
+            <div class="section">
+              <div class="row">
+                <strong>Role Tasks (per role)</strong>
+                <button class="btn small right" id="addRoleTaskBtn">Add</button>
+              </div>
+              <div id="roleTaskList" class="stack"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Tasks Tab ===== -->
+      <div id="tab-tasks" class="tab-pane hidden">
+        <div class="panel">
+          <div class="row">
+            <h3>Tasks & Scores</h3>
+            <span class="hint">Live automation scoring. Click Focus to center in the diagram.</span>
+          </div>
+          <div id="noDeptHintTasks" class="hint">Select a department.</div>
+          <div id="tasksWrap" class="hidden stack"></div>
+        </div>
+      </div>
+
+      <!-- ===== Handoffs Tab ===== -->
+      <div id="tab-handoffs" class="tab-pane hidden">
+        <div class="panel">
+          <div class="row">
+            <h3>Inter-departmental & Cross-Role Handoffs</h3>
+            <button class="btn small right" id="addHandoffBtn">New Handoff</button>
+          </div>
+          <div class="hint">Connect any two nodes: Department ↔ Department, SubDept ↔ SubDept, Role ↔ Role.</div>
+          <div id="handoffList" class="stack"></div>
+        </div>
+      </div>
+
+      <!-- ===== Flowchart Tab ===== -->
+      <div id="tab-flowchart" class="tab-pane hidden">
+        <div class="panel">
+          <div class="row">
+            <h3>Flowcharts</h3>
+            <div class="toolbar">
+              <button class="btn small" id="masterMapBtn">Master Map</button>
+              <button class="btn small" id="deptMapBtn">Department Map</button>
+              <button class="btn small" id="relayoutBtn" title="Auto-layout">Re-Layout</button>
+              <button class="btn small" id="exportPngBtn">Export PNG</button>
+              <button class="btn small" id="exportSvgBtn">Export SVG</button>
+            </div>
+            <span class="badge right">Drag to tweak — positions persist</span>
+          </div>
+          <div class="cy-wrap" id="cy"></div>
+          <div class="hint">
+            Color code: Departments (neutral), Sub-departments (lighter), Roles (red accent), Tasks (blue). Pain points -> red border.
+            Handoffs: dashed if manual, solid if API.
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Roadmap Tab ===== -->
+      <div id="tab-roadmap" class="tab-pane hidden">
+        <div class="panel">
+          <div class="row">
+            <h3>Automation Roadmap</h3>
+            <button class="btn small" id="recomputeScoresBtn">Recompute Scores</button>
+          </div>
+          <div id="roadmapList" class="stack"></div>
+        </div>
+      </div>
+
+      <!-- ===== Exports Tab ===== -->
+      <div id="tab-exports" class="tab-pane hidden">
+        <div class="panel">
+          <div class="row"><h3>Exports</h3></div>
+          <div class="grid">
+            <div class="col-6 card">
+              <div class="row">
+                <strong>CSV</strong>
+                <span class="hint right">Tasks & Handoffs</span>
+              </div>
+              <div class="row">
+                <button class="btn small" id="exportTasksCsvBtn">Export Tasks CSV</button>
+                <button class="btn small" id="exportHandoffsCsvBtn">Export Handoffs CSV</button>
+              </div>
+            </div>
+            <div class="col-6 card">
+              <div class="row">
+                <strong>PDF Blueprint</strong>
+                <span class="hint right">Company overview + thumbnails</span>
+              </div>
+              <button class="btn success small" id="exportPdfBtn">Export PDF Blueprint</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Settings Tab ===== -->
+      <div id="tab-settings" class="tab-pane hidden">
+        <div class="panel">
+          <h3>Settings</h3>
+          <div class="grid">
+            <div class="col-6">
+              <div class="section">
+                <strong>Webhooks (optional)</strong>
+                <label class="row">
+                  <input type="checkbox" id="webhookEnabled" />
+                  <span>Enable webhooks</span>
+                </label>
+                <label>Base URL</label>
+                <input id="webhookBaseUrl" placeholder="https://your-make-or-n8n-endpoint" />
+                <div class="stack">
+                  <div class="row">
+                    <strong>Headers</strong>
+                    <button class="btn small right" id="addHeaderBtn">Add Header</button>
+                  </div>
+                  <div id="headerList" class="stack"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="section">
+                <strong>UI</strong>
+                <label>Autosave interval (ms)</label>
+                <input type="number" id="autosaveMs" min="1000" step="500" />
+                <div class="hint">All data lives in your browser (IndexedDB). Download/Upload JSON to move between machines.</div>
+              </div>
+              <div class="section">
+                <strong>About</strong>
+                <div class="chip">Undo / Redo</div>
+                <div class="chip">Autosave</div>
+                <div class="chip">Keyboard: Ctrl/Cmd+S / Z / Y</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+
+<!-- ===== Help ===== -->
+<div id="helpPane" class="help">
+  <div class="row">
+    <strong>Quick Help</strong>
+    <button class="btn small right" id="closeHelp">Close</button>
+  </div>
+  <div class="stack">
+    <div><span class="badge">1</span> Add a department (left). Name must be unique.</div>
+    <div><span class="badge">2</span> In <strong>Form</strong>, add Sub-Departments, Roles, Tools, KPIs, Pain Points, Processes.</div>
+    <div><span class="badge">3</span> Create <strong>Handoffs</strong> between any two nodes and set medium/SLA.</div>
+    <div><span class="badge">4</span> Use <strong>Flowchart</strong> → Master or Department map. Drag to tweak. Export PNG/SVG.</div>
+    <div><span class="badge">5</span> Check <strong>Roadmap</strong> for ranked automation opportunities. Use Focus to navigate.</div>
+    <div><span class="badge">6</span> <strong>Exports</strong> → CSV or PDF Blueprint.</div>
+    <div><span class="badge">7</span> <strong>Settings</strong> → Configure Webhooks. Use POST buttons in sidebar.</div>
+  </div>
+</div>
+
+<!-- ===== Keyboard tips ===== -->
+<div class="kbar">
+  <span class="k">Ctrl/Cmd+S Save</span>
+  <span class="k">Ctrl/Cmd+Z Undo</span>
+  <span class="k">Ctrl/Cmd+Y Redo</span>
+</div>
+
+<script>
+/* ==========================================================
+   Process Atlas — Single-file Web App (Professional Variant)
+   White UI with Red Accents — Fully Client-Side — No Emojis
+   ========================================================== */
+
+const $ = s=>document.querySelector(s);
+const $$ = s=>Array.from(document.querySelectorAll(s));
+const logEl = $("#log");
+
+/* ---------- State & Storage ---------- */
+let state=null, currentDeptId=null, showingMaster=true;
+let history=[], redoStack=[], isApplying=false;
+let cy=null, autosaveTimer=null;
+
+localforage.config({name:"process-atlas", storeName:"app"});
+
+function uuid(){ try{ return uuidv4(); }catch(e){ return 'u-'+Math.random().toString(36).slice(2)+Date.now(); } }
+
+function demoData(){
+  const salesId=uuid(), opsId=uuid();
+  const sMgr=uuid(), sRep=uuid(), oMgr=uuid(), oWh=uuid();
+  const sSub=uuid(), oSub=uuid();
+  const pLead=uuid(), pQuote=uuid(), pPick=uuid(), pShip=uuid();
+
+  return {
+    company:{
+      id:uuid(), name:"Acme Holdings",
+      departments:[
+        {
+          id:salesId, name:"Sales", notes:"",
+          subDepartments:[{id:sSub,name:"Enterprise"}],
+          roles:[{id:sMgr,title:"Sales Manager",notes:""},{id:sRep,title:"Sales Rep",notes:""}],
+          tools:[{id:uuid(),name:"CRM",purpose:"Pipeline",required:true,access:"SSO"}],
+          kpis:[{id:uuid(),name:"Win Rate",target:"30%",notes:""}],
+          painPoints:[
+            {id:uuid(),type:"delay",description:"Contract approvals slow",severity:3},
+            {id:uuid(),type:"manual",description:"Manual quote PDF",severity:2}
+          ],
+          processes:[
+            { id:pLead, name:"Lead Intake", priority:"High", trigger:"Inbound form", steps:["Capture","Qualify","Assign"],
+              durationMinutes:15, frequency:"daily", inputs:[], outputs:[], tools:[], dependencies:[],
+              raci:{R:[sRep],A:[sMgr],C:[],I:[sMgr]}, notes:"",
+              score:{frequency:0,duration:0,errors:0,dependencies:0,manualSteps:0,total:0}
+            },
+            { id:pQuote, name:"Quote Creation", priority:"Critical", trigger:"Qualified need", steps:["Gather requirements","Create quote","Approval","Send"],
+              durationMinutes:60, frequency:"daily", inputs:[], outputs:[], tools:[], dependencies:[pLead],
+              raci:{R:[sRep],A:[sMgr],C:[],I:[]}, notes:"Manual PDF", score:{frequency:0,duration:0,errors:0,dependencies:0,manualSteps:0,total:0}
+            }
+          ],
+          handoffs:[]
+        },
+        {
+          id:opsId, name:"Operations", notes:"",
+          subDepartments:[{id:oSub,name:"Fulfillment"}],
+          roles:[{id:oMgr,title:"Ops Manager",notes:""},{id:oWh,title:"Warehouse",notes:"Pick & pack"}],
+          tools:[{id:uuid(),name:"WMS",purpose:"Inventory",required:true,access:"VPN"}],
+          kpis:[{id:uuid(),name:"OTIF",target:"95%",notes:""}],
+          painPoints:[{id:uuid(),type:"error",description:"Wrong items picked",severity:3}],
+          processes:[
+            { id:pPick, name:"Pick & Pack", priority:"High", trigger:"Paid order", steps:["Print list","Pick","Pack","Label"],
+              durationMinutes:30, frequency:"daily", inputs:[], outputs:[], tools:[], dependencies:[],
+              raci:{R:[oWh],A:[oMgr],C:[],I:[]}, notes:"Error risk", score:{frequency:0,duration:0,errors:0,dependencies:0,manualSteps:0,total:0}
+            },
+            { id:pShip, name:"Ship Order", priority:"High", trigger:"Packed box", steps:["Book courier","Manifest","Handover"],
+              durationMinutes:20, frequency:"daily", inputs:[], outputs:[], tools:[], dependencies:[pPick],
+              raci:{R:[oWh],A:[oMgr],C:[],I:[]}, notes:"", score:{frequency:0,duration:0,errors:0,dependencies:0,manualSteps:0,total:0}
+            }
+          ],
+          handoffs:[
+            { id:uuid(), source:{type:"department",id:salesId}, target:{type:"subDepartment",id:oSub},
+              artifact:"Order Handoff", medium:"api", slaMinutes:120, failureModes:["Missing address","API timeout"], notes:""
+            },
+            { id:uuid(), source:{type:"role",id:sRep}, target:{type:"role",id:oWh},
+              artifact:"Rush Order Note", medium:"email", slaMinutes:30, failureModes:["Email lost"], notes:""
+            }
+          ]
+        }
+      ]
+    },
+    settings:{
+      webhooks:{enabled:false, baseUrl:"", headers:[{key:"Authorization", value:""}]},
+      ui:{autosaveMs:5000}
+    },
+    _positions:{ master:{}, dept:{} }
+  };
+}
+
+/* ---------- Logging ---------- */
+function log(msg){ logEl.textContent += `\n• ${msg}`; logEl.scrollTop = logEl.scrollHeight; }
+function logErr(msg){ logEl.textContent += `\n! ${msg}`; logEl.scrollTop = logEl.scrollHeight; }
+
+/* ---------- Persistence ---------- */
+async function loadState(){
+  const saved = await localforage.getItem("state");
+  state = saved || demoData();
+  pushHistory(); // baseline
+}
+async function saveState(){ try{ await localforage.setItem("state", state); log("Saved."); }catch(e){ logErr("Save failed: "+e.message); } }
+
+/* ---------- History (Undo/Redo) ---------- */
+function snapshot(){ return JSON.parse(JSON.stringify(state)); }
+function pushHistory(){ if(isApplying) return; history.push(snapshot()); if(history.length>150) history.shift(); redoStack=[]; }
+function undo(){ if(history.length<=1) return; const cur=history.pop(); redoStack.push(cur); const prev=history[history.length-1]; isApplying=true; state=JSON.parse(JSON.stringify(prev)); isApplying=false; refreshAll(); log("Undone."); }
+function redo(){ if(!redoStack.length) return; const next=redoStack.pop(); history.push(snapshot()); isApplying=true; state=JSON.parse(JSON.stringify(next)); isApplying=false; refreshAll(); log("Redone."); }
+
+/* ---------- Utils ---------- */
+function byId(arr,id){ return (arr||[]).find(x=>x.id===id); }
+function safeNum(v,d=0){ v=Number(v); return Number.isFinite(v)?v:d; }
+function uniqueDeptName(name,exceptId=null){
+  name=(name||"").trim(); if(!name) return {ok:false,msg:"Name required"};
+  const exists = state.company.departments.some(d=>d.name.toLowerCase()===name.toLowerCase() && d.id!==exceptId);
+  return exists? {ok:false,msg:"Department name must be unique"} : {ok:true};
+}
+function currentDept(){ return byId(state.company.departments, currentDeptId) || null; }
+
+/* ---------- Scoring ---------- */
+function frequencyWeight(freq){ return {daily:25,weekly:18,monthly:12,quarterly:8,ad_hoc:4}[freq] ?? 10; }
+function durationWeight(min){ return Math.max(0, Math.min(25, Math.round((min||0)/10)*3)); }
+function errorsWeight(dept){
+  const pts = dept.painPoints||[];
+  const err = pts.filter(p=>p.type==='error').length;
+  const man = pts.filter(p=>p.type==='manual').length;
+  return Math.max(0, Math.min(25, (err*7)+(man*4)));
+}
+function depsWeight(n){ return Math.max(0, Math.min(15, n*3)); }
+function manualStepsWeight(proc){
+  const hasManual = (proc.notes||"").toLowerCase().includes("manual");
+  const steps = (proc.steps||[]).length; const tools=(proc.tools||[]).length;
+  let base = hasManual?8:0; if(steps>=5 && !tools) base+=5; if(steps>=8) base+=2;
+  return Math.max(0, Math.min(10, base));
+}
+function computeScore(dept, proc){
+  const f=frequencyWeight(proc.frequency), d=durationWeight(proc.durationMinutes), e=errorsWeight(dept),
+        dep=depsWeight((proc.dependencies||[]).length), m=manualStepsWeight(proc);
+  proc.score = {frequency:f, duration:d, errors:e, dependencies:dep, manualSteps:m, total:Math.max(0,Math.min(100,f+d+e+dep+m))};
+}
+
+/* ---------- Sidebar: Departments ---------- */
+function renderDeptList(){
+  const list=$("#deptList"); list.innerHTML="";
+  state.company.departments.forEach(d=>{
+    const it=document.createElement('div'); it.className="item"+(d.id===currentDeptId?' active':'');
+    it.innerHTML=`
+      <div class="stack">
+        <div class="name">${d.name}</div>
+        <div class="row">
+          <span class="tag">${(d.subDepartments||[]).length} sub</span>
+          <span class="tag">${(d.roles||[]).length} roles</span>
+          <span class="tag">${(d.processes||[]).length} procs</span>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn small" data-act="open">Open</button>
+        <button class="btn small" data-act="rename">Rename</button>
+        <button class="btn danger small" data-act="del">Delete</button>
+      </div>`;
+    it.querySelector('[data-act="open"]').onclick=()=>{ currentDeptId=d.id; refreshMain(); };
+    it.querySelector('[data-act="rename"]').onclick=()=>{
+      const name=prompt("New department name:", d.name)||"";
+      const chk=uniqueDeptName(name,d.id); if(!chk.ok){ alert(chk.msg); return; }
+      d.name=name.trim(); pushHistory(); renderDeptList(); renderChart();
+    };
+    it.querySelector('[data-act="del"]').onclick=()=>{
+      if(!confirm(`Delete department "${d.name}"?`)) return;
+      state.company.departments = state.company.departments.filter(x=>x.id!==d.id);
+      if(currentDeptId===d.id) currentDeptId=null;
+      pushHistory(); refreshAll();
+    };
+    list.appendChild(it);
+  });
+}
+$("#addDeptBtn").onclick=()=>{
+  const name=prompt("Department name?"); if(!name) return;
+  const chk=uniqueDeptName(name); if(!chk.ok){ alert(chk.msg); return; }
+  const d={id:uuid(),name:name.trim(),notes:"",subDepartments:[],roles:[],tools:[],kpis:[],painPoints:[],processes:[],handoffs:[]};
+  state.company.departments.push(d); currentDeptId=d.id; pushHistory(); refreshAll();
+};
+
+/* ---------- Tabs ---------- */
+const tabNames=["form","tasks","handoffs","flowchart","roadmap","exports","settings"];
+function switchTab(name){
+  $$("#tabs .tab").forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  tabNames.forEach(n=>$("#tab-"+n).classList.toggle('hidden', n!==name));
+  if(name==="flowchart"){ ensureCy(); renderChart(); }
+  if(name==="roadmap"){ renderRoadmap(); }
+  if(name==="tasks"){ renderTasks(); }
+  if(name==="handoffs"){ renderHandoffs(); }
+}
+$("#tabs").addEventListener('click', e=>{
+  const t=e.target.closest('.tab'); if(!t) return; switchTab(t.dataset.tab);
+});
+
+/* ---------- Company Name ---------- */
+$("#companyName").addEventListener('input', e=>{ state.company.name=e.target.value; pushHistory(); });
+
+/* ---------- Form Rendering ---------- */
+function ensureDeptSelected(hintIds){
+  const has=!!currentDept(); hintIds.forEach(id=>$(id).classList.toggle('hidden', has));
+  $("#deptFormWrap").classList.toggle('hidden', !has);
+  $("#tasksWrap").classList.toggle('hidden', !has);
+}
+
+function renderDeptForm(){
+  ensureDeptSelected(["#noDeptHintForm"]);
+  const d=currentDept(); if(!d) return;
+  $("#deptName").value=d.name; $("#deptNotes").value=d.notes||"";
+  $("#deptName").oninput=(e)=>{ const name=e.target.value; const chk=uniqueDeptName(name,d.id); e.target.style.outline=chk.ok? "":"2px solid var(--danger)"; if(chk.ok){ d.name=name.trim(); pushHistory(); renderDeptList(); renderChart(); } };
+  $("#deptNotes").oninput=(e)=>{ d.notes=e.target.value; pushHistory(); };
+
+  // Sub-Departments
+  const subWrap=$("#subDeptList"); subWrap.innerHTML="";
+  (d.subDepartments||[]).forEach(sd=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`<div class="row"><input value="${sd.name}"/><button class="btn danger small right">Delete</button></div>`;
+    const inp=el.querySelector('input'); const del=el.querySelector('button');
+    inp.oninput=()=>{ sd.name=inp.value; pushHistory(); renderChart(); };
+    del.onclick=()=>{ d.subDepartments=d.subDepartments.filter(x=>x.id!==sd.id); pushHistory(); renderDeptForm(); renderChart(); };
+    subWrap.appendChild(el);
+  });
+  $("#addSubDeptBtn").onclick=()=>{ d.subDepartments.push({id:uuid(),name:"New Sub-Dept"}); pushHistory(); renderDeptForm(); renderChart(); };
+
+  // Roles
+  const roleWrap=$("#roleList"); roleWrap.innerHTML="";
+  (d.roles||[]).forEach(r=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-4"><label>Title</label><input value="${r.title}"></div>
+        <div class="col-7"><label>Notes</label><input value="${r.notes||''}"></div>
+        <div class="col-1"><label>&nbsp;</label><button class="btn danger small">Delete</button></div>
+      </div>`;
+    const [title,notes]=el.querySelectorAll('input'); const del=el.querySelector('button');
+    title.oninput=()=>{ r.title=title.value; pushHistory(); renderChart(); };
+    notes.oninput=()=>{ r.notes=notes.value; pushHistory(); };
+    del.onclick=()=>{ d.roles=d.roles.filter(x=>x.id!==r.id); pushHistory(); renderDeptForm(); renderChart(); };
+    roleWrap.appendChild(el);
+  });
+  $("#addRoleBtn").onclick=()=>{ d.roles.push({id:uuid(),title:"New Role",notes:""}); pushHistory(); renderDeptForm(); renderChart(); };
+
+  // Tools
+  const toolWrap=$("#toolList"); toolWrap.innerHTML="";
+  (d.tools||[]).forEach(t=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-3"><label>Tool</label><input value="${t.name}"></div>
+        <div class="col-4"><label>Purpose</label><input value="${t.purpose||''}"></div>
+        <div class="col-2"><label>Required?</label><select><option ${t.required?'selected':''} value="true">Yes</option><option ${!t.required?'selected':''} value="false">No</option></select></div>
+        <div class="col-2"><label>Access</label><input value="${t.access||''}"></div>
+        <div class="col-1"><label>&nbsp;</label><button class="btn danger small">Delete</button></div>
+      </div>`;
+    const [name,purpose,reqSel,access,del]=[...el.querySelectorAll('input'), el.querySelector('select'), el.querySelectorAll('input')[2], el.querySelector('button')];
+    name.oninput=()=>{ t.name=name.value; pushHistory(); };
+    purpose.oninput=()=>{ t.purpose=purpose.value; pushHistory(); };
+    reqSel.onchange=()=>{ t.required=reqSel.value==="true"; pushHistory(); };
+    access.oninput=()=>{ t.access=access.value; pushHistory(); };
+    del.onclick=()=>{ d.tools=d.tools.filter(x=>x.id!==t.id); pushHistory(); renderDeptForm(); };
+    toolWrap.appendChild(el);
+  });
+  $("#addToolBtn").onclick=()=>{ d.tools.push({id:uuid(),name:"",purpose:"",required:true,access:""}); pushHistory(); renderDeptForm(); };
+
+  // KPIs
+  const kpiWrap=$("#kpiList"); kpiWrap.innerHTML="";
+  (d.kpis||[]).forEach(k=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-4"><label>Name</label><input value="${k.name}"></div>
+        <div class="col-3"><label>Target</label><input value="${k.target||''}"></div>
+        <div class="col-4"><label>Notes</label><input value="${k.notes||''}"></div>
+        <div class="col-1"><label>&nbsp;</label><button class="btn danger small">Delete</button></div>
+      </div>`;
+    const [n,tg,nt]=el.querySelectorAll('input'); const del=el.querySelector('button');
+    n.oninput=()=>{ k.name=n.value; pushHistory(); };
+    tg.oninput=()=>{ k.target=tg.value; pushHistory(); };
+    nt.oninput=()=>{ k.notes=nt.value; pushHistory(); };
+    del.onclick=()=>{ d.kpis=d.kpis.filter(x=>x.id!==k.id); pushHistory(); renderDeptForm(); };
+    kpiWrap.appendChild(el);
+  });
+  $("#addKpiBtn").onclick=()=>{ d.kpis.push({id:uuid(),name:"",target:"",notes:""}); pushHistory(); renderDeptForm(); };
+
+  // Pain Points
+  const painWrap=$("#painList"); painWrap.innerHTML="";
+  (d.painPoints||[]).forEach(p=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-3"><label>Type</label><select>
+          <option ${p.type==='delay'?'selected':''} value="delay">delay</option>
+          <option ${p.type==='error'?'selected':''} value="error">error</option>
+          <option ${p.type==='manual'?'selected':''} value="manual">manual</option>
+          <option ${p.type==='single_point'?'selected':''} value="single_point">single_point</option>
+        </select></div>
+        <div class="col-7"><label>Description</label><input value="${p.description||''}"></div>
+        <div class="col-1"><label>Severity</label><input type="number" min="1" max="5" value="${p.severity||1}"></div>
+        <div class="col-1"><label>&nbsp;</label><button class="btn danger small">Delete</button></div>
+      </div>`;
+    const sel=el.querySelector('select'); const desc=el.querySelectorAll('input')[0]; const sev=el.querySelectorAll('input')[1]; const del=el.querySelector('button');
+    sel.onchange=()=>{ p.type=sel.value; pushHistory(); };
+    desc.oninput=()=>{ p.description=desc.value; pushHistory(); };
+    sev.oninput=()=>{ p.severity=safeNum(sev.value,1); pushHistory(); };
+    del.onclick=()=>{ d.painPoints=d.painPoints.filter(x=>x.id!==p.id); pushHistory(); renderDeptForm(); };
+    painWrap.appendChild(el);
+  });
+  $("#addPainBtn").onclick=()=>{ d.painPoints.push({id:uuid(),type:"delay",description:"",severity:1}); pushHistory(); renderDeptForm(); };
+
+  // Processes
+  const procWrap=$("#processList"); procWrap.innerHTML="";
+  (d.processes||[]).forEach(pr=>{
+    const roleOpts=(d.roles||[]).map(r=>`<option value="${r.id}">${r.title}</option>`).join("");
+    const toolOpts=(d.tools||[]).map(t=>`<option value="${t.id}">${t.name}</option>`).join("");
+    computeScore(d, pr);
+
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-4"><label>Name</label><input value="${pr.name}"></div>
+        <div class="col-2"><label>Priority</label><select>${["Critical","High","Medium","Low"].map(v=>`<option ${pr.priority===v?'selected':''}>${v}</option>`).join("")}</select></div>
+        <div class="col-3"><label>Trigger</label><input value="${pr.trigger||''}"></div>
+        <div class="col-1"><label>Duration</label><input type="number" value="${pr.durationMinutes||0}" title="Minutes"></div>
+        <div class="col-2"><label>Frequency</label><select>${["daily","weekly","monthly","quarterly","ad_hoc"].map(v=>`<option ${pr.frequency===v?'selected':''}>${v}</option>`).join("")}</select></div>
+
+        <div class="col-12"><label>Steps (one per line)</label><textarea rows="3">${(pr.steps||[]).join("\n")}</textarea></div>
+
+        <div class="col-6"><label>Tools</label><select multiple size="3">${toolOpts}</select><div class="hint">Hold Ctrl/Cmd for multi-select</div></div>
+        <div class="col-6"><label>Dependencies (process IDs, comma)</label><input value="${(pr.dependencies||[]).join(',')}"></div>
+
+        <div class="col-12 section">
+          <strong>RACI</strong>
+          <div class="grid">
+            <div class="col-3"><label>Responsible (R)</label><select multiple size="3" class="raciR">${roleOpts}</select></div>
+            <div class="col-3"><label>Accountable (A)</label><select multiple size="3" class="raciA">${roleOpts}</select></div>
+            <div class="col-3"><label>Consulted (C)</label><select multiple size="3" class="raciC">${roleOpts}</select></div>
+            <div class="col-3"><label>Informed (I)</label><select multiple size="3" class="raciI">${roleOpts}</select></div>
+          </div>
+        </div>
+
+        <div class="col-12"><label>Notes</label><input value="${pr.notes||''}"></div>
+
+        <div class="col-12 row">
+          <span>Score: <strong>${pr.score.total}</strong></span>
+          <span class="chip">F ${pr.score.frequency}</span>
+          <span class="chip">D ${pr.score.duration}</span>
+          <span class="chip">E ${pr.score.errors}</span>
+          <span class="chip">Deps ${pr.score.dependencies}</span>
+          <span class="chip">Manual ${pr.score.manualSteps}</span>
+          <button class="btn danger small right">Delete</button>
+        </div>
+      </div>`;
+
+    const [nameInp,prioSel,trigInp,durInp,freqSel,stepsTxt,toolsSel,depsInp,notesInp,delBtn]=[
+      el.querySelectorAll('input')[0],
+      el.querySelectorAll('select')[0],
+      el.querySelectorAll('input')[1],
+      el.querySelectorAll('input')[2],
+      el.querySelectorAll('select')[1],
+      el.querySelector('textarea'),
+      el.querySelectorAll('select')[2],
+      el.querySelectorAll('input')[3],
+      el.querySelectorAll('input')[4],
+      el.querySelector('button')
+    ];
+    nameInp.oninput=()=>{ pr.name=nameInp.value; pushHistory(); renderTasks(); renderChart(); };
+    prioSel.onchange=()=>{ pr.priority=prioSel.value; pushHistory(); };
+    trigInp.oninput=()=>{ pr.trigger=trigInp.value; pushHistory(); };
+    durInp.oninput=()=>{ pr.durationMinutes=safeNum(durInp.value,0); pushHistory(); renderTasks(); };
+    freqSel.onchange=()=>{ pr.frequency=freqSel.value; pushHistory(); renderTasks(); };
+    stepsTxt.oninput=()=>{ pr.steps=stepsTxt.value.split('\n').map(s=>s.trim()).filter(Boolean); pushHistory(); renderTasks(); };
+
+    (pr.tools||[]).forEach(id=>{ const o=[...toolsSel.options].find(x=>x.value===id); if(o) o.selected=true; });
+    toolsSel.onchange=()=>{ pr.tools=[...toolsSel.selectedOptions].map(o=>o.value); pushHistory(); renderTasks(); };
+
+    depsInp.oninput=()=>{ pr.dependencies=depsInp.value.split(',').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+
+    pr.raci=pr.raci||{R:[],A:[],C:[],I:[]};
+    const Rsel=el.querySelector('.raciR'), Asel=el.querySelector('.raciA'), Csel=el.querySelector('.raciC'), Isel=el.querySelector('.raciI');
+    const setMulti=(sel,arr)=>arr.forEach(id=>{ const o=[...sel.options].find(x=>x.value===id); if(o) o.selected=true; });
+    setMulti(Rsel,pr.raci.R); setMulti(Asel,pr.raci.A); setMulti(Csel,pr.raci.C); setMulti(Isel,pr.raci.I);
+    const onRaci=()=>{ pr.raci.R=[...Rsel.selectedOptions].map(o=>o.value); pr.raci.A=[...Asel.selectedOptions].map(o=>o.value);
+                       pr.raci.C=[...Csel.selectedOptions].map(o=>o.value); pr.raci.I=[...Isel.selectedOptions].map(o=>o.value);
+                       pushHistory(); renderTasks(); renderChart(); };
+    [Rsel,Asel,Csel,Isel].forEach(s=> s.onchange=onRaci);
+
+    delBtn.onclick=()=>{ d.processes=d.processes.filter(x=>x.id!==pr.id); pushHistory(); renderDeptForm(); renderTasks(); renderRoadmap(); renderChart(); };
+
+    procWrap.appendChild(el);
+  });
+  $("#addProcessBtn").onclick=()=>{ d.processes.push({id:uuid(),name:"New Process",priority:"Medium",trigger:"",steps:[],durationMinutes:0,frequency:"weekly",inputs:[],outputs:[],tools:[],dependencies:[],raci:{R:[],A:[],C:[],I:[]},notes:"",score:{frequency:0,duration:0,errors:0,dependencies:0,manualSteps:0,total:0}}); pushHistory(); renderDeptForm(); renderTasks(); };
+  
+  // Role Tasks
+  d.roleTasks=d.roleTasks||[];
+  const rtWrap=$("#roleTaskList"); rtWrap.innerHTML="";
+  (d.roleTasks||[]).forEach(rt=>{
+    const roleOpts=(d.roles||[]).map(r=>`<option ${rt.roleId===r.id?'selected':''} value="${r.id}">${r.title}</option>`).join("");
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-3"><label>Role</label><select>${roleOpts}</select></div>
+        <div class="col-3"><label>Task</label><input value="${rt.task||''}"></div>
+        <div class="col-2"><label>Trigger</label><input value="${rt.trigger||''}"></div>
+        <div class="col-4"><label>Dependencies (IDs, comma)</label><input value="${(rt.dependencies||[]).join(',')}"></div>
+        <div class="col-6"><label>Steps (one per line)</label><textarea rows="2">${(rt.steps||[]).join("\n")}</textarea></div>
+        <div class="col-2"><label>Tools</label><input value="${(rt.tools||[]).join(',')}"></div>
+        <div class="col-2"><label>Avg Time (min)</label><input type="number" value="${rt.avgTime||0}"></div>
+        <div class="col-2"><label>Pain Points</label><input value="${(rt.painPoints||[]).join(',')}"></div>
+        <div class="col-12 row"><span class="hint">Role-level activities feed the department map swimlanes.</span><button class="btn danger small right">Delete</button></div>
+      </div>`;
+    const [roleSel,taskInp,trigInp,depInp,stepsTxt,toolsInp,timeInp,painInp,del]=[
+      el.querySelector('select'), el.querySelectorAll('input')[0], el.querySelectorAll('input')[1], el.querySelectorAll('input')[2],
+      el.querySelector('textarea'), el.querySelectorAll('input')[3], el.querySelectorAll('input')[4], el.querySelectorAll('input')[5], el.querySelector('button')
+    ];
+    roleSel.onchange=()=>{ rt.roleId=roleSel.value; pushHistory(); renderChart(); };
+    taskInp.oninput=()=>{ rt.task=taskInp.value; pushHistory(); };
+    trigInp.oninput=()=>{ rt.trigger=trigInp.value; pushHistory(); };
+    depInp.oninput=()=>{ rt.dependencies=depInp.value.split(',').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+    stepsTxt.oninput=()=>{ rt.steps=stepsTxt.value.split('\n').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+    toolsInp.oninput=()=>{ rt.tools=toolsInp.value.split(',').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+    timeInp.oninput=()=>{ rt.avgTime=safeNum(timeInp.value,0); pushHistory(); };
+    painInp.oninput=()=>{ rt.painPoints=painInp.value.split(',').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+    del.onclick=()=>{ d.roleTasks=d.roleTasks.filter(x=>x.id!==rt.id); pushHistory(); renderDeptForm(); renderChart(); };
+    rtWrap.appendChild(el);
+  });
+  $("#addRoleTaskBtn").onclick=()=>{ d.roleTasks.push({id:uuid(),roleId:(d.roles[0]?.id||""),task:"",trigger:"",steps:[],dependencies:[],tools:[],avgTime:0,painPoints:[]}); pushHistory(); renderDeptForm(); };
+}
+
+/* ---------- Tasks Tab ---------- */
+function renderTasks(){
+  const d=currentDept(); const wrap=$("#tasksWrap"); $("#noDeptHintTasks").classList.toggle('hidden', !!d); wrap.classList.toggle('hidden', !d);
+  if(!d){ wrap.innerHTML=""; return; }
+  wrap.innerHTML="";
+
+  (d.processes||[]).forEach(pr=>{
+    computeScore(d,pr);
+    const badge = pr.score.total>=75? 'Quick Win' : pr.score.total>=55? 'High Impact' : 'Investigate';
+    const it=document.createElement('div'); it.className="item";
+    it.innerHTML=`
+      <div class="stack">
+        <div class="row">
+          <span class="name">${pr.name}</span>
+          <span class="pill">Score <strong>${pr.score.total}</strong></span>
+          <span class="tag">${badge}</span>
+        </div>
+        <div class="row">
+          <span class="chip">Freq: ${pr.frequency}</span>
+          <span class="chip">Duration: ${pr.durationMinutes}m</span>
+          <span class="chip">Deps: ${(pr.dependencies||[]).length}</span>
+          <span class="chip">Priority: ${pr.priority}</span>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn small" data-focus="${pr.id}">Focus</button>
+        <button class="btn warn small" data-edit="${pr.id}">Edit</button>
+      </div>`;
+    it.querySelector('[data-focus]').onclick=()=>{ switchTab('flowchart'); showingMaster=false; renderChart(); focusNode(pr.id); };
+    it.querySelector('[data-edit]').onclick=()=>{ switchTab('form'); };
+    wrap.appendChild(it);
+  });
+}
+
+/* ---------- Handoffs ---------- */
+function renderHandoffs(){
+  const d=currentDept(); const wrap=$("#handoffList"); wrap.innerHTML="";
+  if(!d){ wrap.innerHTML=`<div class="hint">Select a department.</div>`; return; }
+
+  const choices=()=>[
+    ...state.company.departments.map(x=>({type:"department",id:x.id,label:`Dept: ${x.name}`})),
+    ...(d.subDepartments||[]).map(x=>({type:"subDepartment",id:x.id,label:`Sub: ${x.name}`})),
+    ...(d.roles||[]).map(x=>({type:"role",id:x.id,label:`Role: ${x.title}`}))
+  ];
+  const choiceHtml=(cur)=>choices().map(n=>`<option ${cur?.id===n.id&&cur?.type===n.type?'selected':''} value="${n.type}|${n.id}">${n.label}</option>`).join("");
+
+  (d.handoffs||[]).forEach(h=>{
+    const el=document.createElement('div'); el.className="card";
+    el.innerHTML=`
+      <div class="grid">
+        <div class="col-3"><label>Source</label><select>${choiceHtml(h.source)}</select></div>
+        <div class="col-3"><label>Target</label><select>${choiceHtml(h.target)}</select></div>
+        <div class="col-3"><label>Artifact/Type</label><input value="${h.artifact||''}"></div>
+        <div class="col-1"><label>SLA (min)</label><input type="number" value="${h.slaMinutes||0}"></div>
+        <div class="col-2"><label>Medium</label><select>${["email","api","form","chat","file"].map(v=>`<option ${h.medium===v?'selected':''}>${v}</option>`).join("")}</select></div>
+        <div class="col-12"><label>Failure Modes (comma)</label><input value="${(h.failureModes||[]).join(',')}"></div>
+        <div class="col-12"><label>Notes</label><input value="${h.notes||''}"></div>
+        <div class="col-12"><button class="btn danger small right">Delete</button></div>
+      </div>`;
+    const [srcSel,tgtSel,artInp,slaInp,medSel,failsInp,notesInp,delBtn]=[
+      el.querySelectorAll('select')[0], el.querySelectorAll('select')[1], el.querySelectorAll('input')[0], el.querySelectorAll('input')[1],
+      el.querySelectorAll('select')[2], el.querySelectorAll('input')[2], el.querySelectorAll('input')[3], el.querySelector('button')
+    ];
+    srcSel.onchange=()=>{ const [type,id]=srcSel.value.split('|'); h.source={type,id}; pushHistory(); renderChart(); };
+    tgtSel.onchange=()=>{ const [type,id]=tgtSel.value.split('|'); h.target={type,id}; pushHistory(); renderChart(); };
+    artInp.oninput=()=>{ h.artifact=artInp.value; pushHistory(); };
+    slaInp.oninput=()=>{ h.slaMinutes=safeNum(slaInp.value,0); pushHistory(); };
+    medSel.onchange=()=>{ h.medium=medSel.value; pushHistory(); renderChart(); };
+    failsInp.oninput=()=>{ h.failureModes=failsInp.value.split(',').map(s=>s.trim()).filter(Boolean); pushHistory(); };
+    notesInp.oninput=()=>{ h.notes=notesInp.value; pushHistory(); };
+    delBtn.onclick=()=>{ d.handoffs=d.handoffs.filter(x=>x.id!==h.id); pushHistory(); renderHandoffs(); renderChart(); };
+    wrap.appendChild(el);
+  });
+
+  $("#addHandoffBtn").onclick=()=>{
+    d.handoffs.push({id:uuid(), source:{type:"department", id:d.id}, target:{type:"department", id:state.company.departments.find(x=>x.id!==d.id)?.id||d.id}, artifact:"", medium:"email", slaMinutes:0, failureModes:[], notes:""});
+    pushHistory(); renderHandoffs(); renderChart();
+  };
+}
+
+/* ---------- Flowcharts (Cytoscape) + Persistent positions ---------- */
+const LAYOUT_MASTER = { name:'cose-bilkent', nodeDimensionsIncludeLabels:true, randomize:false, fit:true, animate:false };
+const LAYOUT_DEPT   = { name:'dagre', rankSep:120, nodeSep:30, fit:true, animate:false };
+
+function ensureCy(){
+  if(cy) return;
+  cy = cytoscape({
+    container: $("#cy"),
+    wheelSensitivity: 0.2,
+    style: [
+      { selector:'node', style:{
+          'label':'data(label)', 'text-wrap':'wrap','text-max-width': 160, 'font-size':11, 'text-valign':'center','text-halign':'center',
+          'background-color':'data(color)', 'border-width':'data(borderWidth)','border-color':'data(borderColor)','color':'#2c3e50'
+      }},
+      { selector:'node[type="department"]', style:{ 'shape':'round-rectangle','background-color':'#eaeef7'}},
+      { selector:'node[type="subDepartment"]', style:{ 'shape':'round-rectangle','background-color':'#f4f6fb'}},
+      { selector:'node[type="role"]', style:{ 'shape':'round-rectangle','background-color':'#ffebee','border-color':'#ffcdd2'}},
+      { selector:'node[type="task"]', style:{ 'shape':'round-rectangle','background-color':'#e3f2fd'}},
+      { selector:'edge', style:{
+          'line-color':'#b0b7c6','target-arrow-color':'#b0b7c6','target-arrow-shape':'triangle','curve-style':'bezier','width':1.6
+      }},
+      { selector:'edge[styleType="manual"]', style:{ 'line-style':'dashed'}},
+      { selector:'edge[styleType="api"]', style:{ 'line-style':'solid'}},
+      { selector:'.highlight', style:{ 'border-color':'#e53935','border-width':3 }},
+      { selector:'.bottleneck', style:{ 'border-color':'#e53935','border-width':3 }},
+      { selector:':parent', style:{ 'padding':14, 'background-opacity':0.18, 'text-valign':'top', 'font-weight':'bold' }}
+    ]
+  });
+
+  // Persist positions on drag
+  cy.on('dragfree', 'node', savePositions);
+}
+
+function asLabel(s){ return (s||"").length>42? s.slice(0,39)+"…" : (s||""); }
+
+function buildMasterElements(){
+  const els=[]; const deps=state.company.departments;
+  deps.forEach(dep=>{
+    els.push({ data:{ id:dep.id, label:dep.name, type:'department', color:'#eaeef7'}});
+    (dep.subDepartments||[]).forEach(sd=>{
+      els.push({ data:{ id:sd.id, label:sd.name, type:'subDepartment', parent:dep.id, color:'#f4f6fb'}});
+    });
+  });
+
+  // Handoffs everywhere
+  deps.forEach(dep=>{
+    (dep.handoffs||[]).forEach(h=>{
+      const st = h.medium==='api'?'api':'manual';
+      const from=h.source.id, to=h.target.id;
+
+      const ensureRole=(rid)=>{
+        if(cy && cy.getElementById(rid).length) return;
+        let owner=null, role=null;
+        deps.forEach(d2=>{
+          const r=(d2.roles||[]).find(r=>r.id===rid);
+          if(r){ owner=d2; role=r; }
+        });
+        if(owner && role){
+          els.push({ data:{ id:rid, label:role.title, type:'role', parent:owner.id, color:'#ffebee', borderColor:'#ffcdd2', borderWidth:1 }});
+        }
+      };
+      if(h.source.type==='role') ensureRole(from);
+      if(h.target.type==='role') ensureRole(to);
+
+      els.push({ data:{ id:h.id, source:from, target:to, styleType:st, label:asLabel(h.artifact)}});
+    });
+  });
+  return els;
+}
+
+function hasPainForProcess(d,p){
+  const txt=(p.notes||"")+" "+(p.steps||[]).join(" ");
+  return (d.painPoints||[]).some(pp=>{
+    const k=(pp.description||"").toLowerCase();
+    return k && txt.toLowerCase().includes(k.split(" ").slice(0,2).join(" "));
+  });
+}
+
+function buildDeptElements(){
+  const d=currentDept(); if(!d) return [];
+  const els=[];
+  (d.roles||[]).forEach(r=> els.push({data:{id:r.id,label:r.title,type:'role',color:'#ffebee',borderColor:'#ffcdd2',borderWidth:1}}));
+  (d.processes||[]).forEach(p=>{
+    const lane=(p.raci?.R?.[0])||undefined;
+    const pain=hasPainForProcess(d,p); const border=pain? '#e53935':'#cfd6e4';
+    els.push({data:{id:p.id,label:p.name,type:'task',parent:lane,color:'#e3f2fd',borderColor:border,borderWidth:pain?3:1}});
+    (p.dependencies||[]).forEach(depId=> els.push({data:{id:p.id+"->"+depId,source:depId,target:p.id,styleType:'api'}}));
+  });
+  (d.handoffs||[]).forEach(h=>{
+    const st=h.medium==='api'?'api':'manual';
+    els.push({data:{id:h.id, source:h.source.id, target:h.target.id, styleType:st, label:asLabel(h.artifact)}});
+  });
+  return els;
+}
+
+/* Persistent positions */
+function posKey(){ return showingMaster? 'master' : ('dept-'+(currentDeptId||'none')); }
+function restorePositions(){
+  const key=posKey();
+  const map = state._positions?.[key] || {};
+  if(Object.keys(map).length===0) return false;
+  cy.nodes().positions(node=>{
+    const p = map[node.id()]; return p? p : node.position();
+  });
+  cy.layout({name:'preset'}).run();
+  return true;
+}
+function savePositions(){
+  state._positions = state._positions || {master:{}, dept:{}};
+  const key=posKey();
+  state._positions[key] = state._positions[key] || {};
+  const store = state._positions[key];
+  cy.nodes().forEach(n=>{ store[n.id()] = {x:n.position('x'), y:n.position('y')}; });
+  pushHistory();
+}
+
+function renderChart(){
+  ensureCy();
+  cy.elements().remove();
+  const els = showingMaster? buildMasterElements() : buildDeptElements();
+  cy.add(els);
+
+  if(!restorePositions()){
+    cy.layout(showingMaster? LAYOUT_MASTER : LAYOUT_DEPT).run();
+    savePositions();
+  }
+}
+
+function focusNode(id){
+  if(!cy) return;
+  const ele=cy.getElementById(id);
+  if(ele && ele.length){
+    cy.elements().removeClass('highlight');
+    ele.addClass('highlight');
+    cy.center(ele); cy.fit(ele, 100);
+  }
+}
+$("#masterMapBtn").onclick=()=>{ showingMaster=true; renderChart(); };
+$("#deptMapBtn").onclick=()=>{ showingMaster=false; renderChart(); };
+$("#relayoutBtn").onclick=()=>{ cy.layout(showingMaster? LAYOUT_MASTER : LAYOUT_DEPT).run(); savePositions(); };
+
+/* ---------- Search ---------- */
+$("#searchInput").addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  const q=e.target.value.trim().toLowerCase(); if(!q) return;
+  let id=null, deptForId=null;
+  for(const d of state.company.departments){
+    if(d.name.toLowerCase().includes(q)){ id=d.id; showingMaster=true; break; }
+    for(const r of d.roles||[]){ if(r.title.toLowerCase().includes(q)){ id=r.id; deptForId=d.id; showingMaster=false; break; } }
+    if(id) break;
+    for(const p of d.processes||[]){ if(p.name.toLowerCase().includes(q)){ id=p.id; deptForId=d.id; showingMaster=false; break; } }
+    if(id) break;
+  }
+  if(id){ if(deptForId) currentDeptId=deptForId; refreshMain(); switchTab('flowchart'); focusNode(id); }
+  else alert("No match.");
+});
+
+/* ---------- Roadmap ---------- */
+function allProcesses(){
+  const arr=[];
+  (state.company.departments||[]).forEach(d=>{
+    (d.processes||[]).forEach(p=>{ computeScore(d,p); arr.push({dept:d,proc:p}); });
+  });
+  return arr.sort((a,b)=> b.proc.score.total - a.proc.score.total);
+}
+function renderRoadmap(){
+  const list=$("#roadmapList"); list.innerHTML="";
+  allProcesses().forEach(({dept,proc},i)=>{
+    const badge = proc.score.total>=75? 'Quick Win' : proc.score.total>=55? 'High Impact' : 'Investigate';
+    const el=document.createElement('div'); el.className="item";
+    el.innerHTML=`
+      <div class="stack">
+        <div class="row">
+          <span class="name">${proc.name}</span>
+          <span class="pill">Score <strong>${proc.score.total}</strong></span>
+          <span class="tag">${badge}</span>
+        </div>
+        <div class="row">
+          <span class="chip">${dept.name}</span>
+          <span class="chip">Freq:${proc.frequency}</span>
+          <span class="chip">Dur:${proc.durationMinutes}m</span>
+          <span class="chip">Deps:${(proc.dependencies||[]).length}</span>
+        </div>
+      </div>
+      <div class="row"><button class="btn small" data-focus="${proc.id}" data-dept="${dept.id}">Focus</button></div>`;
+    el.querySelector('[data-focus]').onclick=evt=>{
+      currentDeptId=evt.currentTarget.getAttribute('data-dept'); switchTab('flowchart'); showingMaster=false; renderChart(); focusNode(proc.id);
+    };
+    list.appendChild(el);
+  });
+}
+$("#recomputeScoresBtn").onclick=()=> renderRoadmap();
+
+/* ---------- Exports ---------- */
+function download(name, content, type="application/json"){
+  const blob = new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 100);
+}
+$("#downloadJsonBtn").onclick=()=> download(`process-atlas-${Date.now()}.json`, JSON.stringify(state,null,2));
+
+$("#uploadJsonInput").onchange=(e)=>{
+  const file=e.target.files?.[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const incoming=JSON.parse(reader.result);
+      const mode=$("#uploadMode").value;
+      if(mode==='replace'){ state=incoming; }
+      else{
+        const incDepts=incoming.company?.departments||[];
+        state.company.name = incoming.company?.name || state.company.name;
+        const seen=new Set(state.company.departments.map(x=>x.id));
+        incDepts.forEach(d=>{ if(!seen.has(d.id)) state.company.departments.push(d); });
+        state.settings = Object.assign({}, state.settings, incoming.settings||{});
+        state._positions = Object.assign({}, state._positions, incoming._positions||{});
+      }
+      pushHistory(); refreshAll(); log("JSON uploaded.");
+    }catch(err){ alert("Invalid JSON: "+err.message); }
+    e.target.value="";
+  };
+  reader.readAsText(file);
+};
+
+$("#exportTasksCsvBtn").onclick=()=>{
+  const rows=[["dept","process_id","process_name","priority","duration_min","frequency","dependencies_count","score_total"]];
+  state.company.departments.forEach(d=>{
+    (d.processes||[]).forEach(p=>{ computeScore(d,p); rows.push([d.name,p.id,p.name,p.priority,p.durationMinutes,p.frequency,(p.dependencies||[]).length,p.score.total]); });
+  });
+  const out=rows.map(r=>r.map(s=>{s=String(s??""); return (s.includes(',')||s.includes('"')||s.includes('\n'))? `"${s.replace(/"/g,'""')}"` : s;}).join(",")).join("\n");
+  download("tasks.csv", out, "text/csv");
+};
+$("#exportHandoffsCsvBtn").onclick=()=>{
+  const rows=[["dept","handoff_id","source","target","artifact","medium","sla_minutes","failure_modes"]];
+  state.company.departments.forEach(d=>{
+    (d.handoffs||[]).forEach(h=> rows.push([d.name,h.id, `${h.source.type}:${h.source.id}`, `${h.target.type}:${h.target.id}`, h.artifact, h.medium, h.slaMinutes, (h.failureModes||[]).join('|')]));
+  });
+  const out=rows.map(r=>r.map(s=>{s=String(s??""); return (s.includes(',')||s.includes('"')||s.includes('\n'))? `"${s.replace(/"/g,'""')}"` : s;}).join(",")).join("\n");
+  download("handoffs.csv", out, "text/csv");
+};
+
+/* PNG / SVG */
+$("#exportPngBtn").onclick=()=>{
+  if(!cy) return;
+  const pngUrl = cy.png({full:true, scale:2, bg:'#ffffff'});
+  const a=document.createElement('a'); a.href=pngUrl; a.download=`flowchart-${showingMaster?'master':'dept'}.png`; a.click();
+};
+$("#exportSvgBtn").onclick=()=>{
+  if(!cy || !cy.svg){ alert("SVG export not available."); return; }
+  const svg = cy.svg({full:true});
+  download(`flowchart-${showingMaster?'master':'dept'}.svg`, svg, "image/svg+xml");
+};
+
+/* PDF Blueprint */
+$("#exportPdfBtn").onclick=async ()=>{
+  const { jsPDF } = window.jspdf;
+  const doc=new jsPDF({unit:'pt', format:'a4'});
+  const pad=36;
+  const line=(y,txt,size=12,bold=false)=>{ doc.setFont('helvetica', bold?'bold':'normal'); doc.setFontSize(size); doc.text(txt, pad, y); return y+size+6; };
+
+  // Cover
+  let y=64;
+  y=line(y, state.company.name||"Company", 22, true);
+  y=line(y, "Process Blueprint", 16);
+  y=line(y, "Generated: "+new Date().toLocaleString(), 11);
+
+  // Master map thumbnail
+  ensureCy(); showingMaster=true; renderChart();
+  const pngMaster=cy.png({full:true, scale:1, bg:'#ffffff'});
+  doc.addImage(pngMaster,'PNG', pad, y, 520, 300); y+=300+18;
+  doc.addPage();
+
+  // Department pages
+  for(const d of state.company.departments){
+    y=64;
+    y=line(y, `Department: ${d.name}`, 16, true);
+    y=line(y, `Sub: ${(d.subDepartments||[]).length}  Roles: ${(d.roles||[]).length}  Processes: ${(d.processes||[]).length}`, 12);
+    y=line(y, `KPIs: ${(d.kpis||[]).map(k=>k.name+(k.target?` (${k.target})`:"")).join(' • ')||"—"}`, 11);
+    y=line(y, `Pain Points: ${(d.painPoints||[]).map(p=>p.type+': '+p.description).join(' • ')||"—"}`, 11);
+
+    currentDeptId=d.id; showingMaster=false; renderChart();
+    const pngDept=cy.png({full:true, scale:1, bg:'#ffffff'});
+    doc.addImage(pngDept,'PNG', pad, y, 520, 300); y+=300+10;
+
+    const top=(d.processes||[]).slice().sort((a,b)=>(b.score?.total||0)-(a.score?.total||0)).slice(0,6);
+    const txt=top.map(p=>`• ${p.name} — Score ${p.score?.total||0}`).join("\n") || "No processes.";
+    doc.setFontSize(11); doc.text(txt, pad, y);
+    doc.addPage();
+  }
+
+  // Global roadmap
+  y=64; y=line(y,"Automation Roadmap (Top 20)",16,true);
+  const items=allProcesses().slice(0,20).map(({dept,proc},i)=> `${i+1}. [${dept.name}] ${proc.name} — Score ${proc.score.total}`);
+  doc.setFontSize(12); doc.text(items.join("\n")||"No items.", pad, y);
+
+  const blob=doc.output('blob'); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`Blueprint-${Date.now()}.pdf`; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 200);
+};
+
+/* ---------- Settings ---------- */
+function renderSettings(){
+  const s=state.settings || (state.settings={webhooks:{enabled:false,baseUrl:"",headers:[]}, ui:{autosaveMs:5000}});
+  $("#webhookEnabled").checked=!!s.webhooks.enabled;
+  $("#webhookBaseUrl").value=s.webhooks.baseUrl||"";
+  $("#autosaveMs").value=s.ui.autosaveMs||5000;
+
+  const hl=$("#headerList"); hl.innerHTML="";
+  (s.webhooks.headers||[]).forEach((h,i)=>{
+    const el=document.createElement('div'); el.className="row";
+    el.innerHTML=`<input style="width:40%" value="${h.key||''}" placeholder="Header key"><input style="width:50%" value="${h.value||''}" placeholder="Header value"><button class="btn danger small">Delete</button>`;
+    const [k,v,del]=[el.querySelectorAll('input')[0], el.querySelectorAll('input')[1], el.querySelector('button')];
+    k.oninput=()=>{ h.key=k.value; pushHistory(); };
+    v.oninput=()=>{ h.value=v.value; pushHistory(); };
+    del.onclick=()=>{ s.webhooks.headers.splice(i,1); pushHistory(); renderSettings(); };
+    hl.appendChild(el);
+  });
+  $("#addHeaderBtn").onclick=()=>{ s.webhooks.headers.push({key:"Authorization", value:"Bearer ..."}); pushHistory(); renderSettings(); };
+
+  $("#webhookEnabled").onchange=e=>{ s.webhooks.enabled=e.target.checked; pushHistory(); };
+  $("#webhookBaseUrl").oninput=e=>{ s.webhooks.baseUrl=e.target.value; pushHistory(); };
+  $("#autosaveMs").oninput=e=>{ s.ui.autosaveMs=safeNum(e.target.value,5000); setupAutosave(); pushHistory(); };
+}
+
+/* ---------- Webhooks ---------- */
+async function postWebhook(kind){
+  const s=state.settings?.webhooks; if(!s?.enabled || !s.baseUrl){ alert("Enable webhooks and set Base URL in Settings."); return; }
+  const url=s.baseUrl.replace(/\/+$/,'') + (kind==='dept'? '/department' : '/company');
+  const headers={}; (s.headers||[]).forEach(h=>{ if(h.key) headers[h.key]=h.value; });
+  headers['Content-Type']='application/json';
+  const body=JSON.stringify(kind==='dept'? currentDept() : state);
+  try{
+    log(`POST ${url}`);
+    const res=await fetch(url,{method:'POST', headers, body});
+    const text=await res.text();
+    log(`-> ${res.status}: ${text.slice(0,180)}${text.length>180?'…':''}`);
+  }catch(e){ logErr("POST failed: "+e.message); }
+}
+$("#postDeptBtn").onclick=()=>postWebhook('dept');
+$("#postCompanyBtn").onclick=()=>postWebhook('company');
+
+/* ---------- Autosave & Shortcuts ---------- */
+function setupAutosave(){ if(autosaveTimer) clearInterval(autosaveTimer); const ms=state.settings?.ui?.autosaveMs||5000; autosaveTimer=setInterval(saveState, ms); }
+$("#saveBtn").onclick=saveState; $("#undoBtn").onclick=undo; $("#redoBtn").onclick=redo;
+window.addEventListener('keydown', e=>{
+  const cmd=(e.ctrlKey||e.metaKey), k=e.key.toLowerCase();
+  if(cmd && k==='s'){ e.preventDefault(); saveState(); }
+  if(cmd && k==='z'){ e.preventDefault(); undo(); }
+  if(cmd && k==='y'){ e.preventDefault(); redo(); }
+});
+
+/* ---------- Persona (front-end only) ---------- */
+$("#personaSelect").onchange=applyPersona;
+function applyPersona(){
+  const p=$("#personaSelect").value;
+  const ro=(p==='viewer');
+  $$('main input, main select, main textarea, main button, aside input, aside select, aside button').forEach(el=>{
+    if(['helpBtn','closeHelp'].includes(el.id)) return;
+    if(ro) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
+  });
+}
+
+/* ---------- Help ---------- */
+$("#helpBtn").onclick=()=>$("#helpPane").classList.add('show');
+$("#closeHelp").onclick=()=>$("#helpPane").classList.remove('show');
+
+/* ---------- Reset / Empty ---------- */
+$("#resetDemoBtn").onclick=()=>{ if(!confirm("Reset to demo data?")) return; state=demoData(); currentDeptId=state.company.departments[0]?.id||null; pushHistory(); refreshAll(); };
+$("#startEmptyBtn").onclick=()=>{
+  if(!confirm("Start empty company?")) return;
+  state={company:{id:uuid(),name:"",departments:[]},settings:{webhooks:{enabled:false,baseUrl:"",headers:[]},ui:{autosaveMs:5000}}, _positions:{master:{},dept:{}}};
+  currentDeptId=null; pushHistory(); refreshAll();
+};
+
+/* ---------- Main refreshers ---------- */
+function refreshMain(){
+  $("#companyName").value=state.company.name||"";
+  renderDeptForm(); renderTasks(); renderHandoffs(); renderSettings(); renderChart(); renderRoadmap();
+}
+function refreshAll(){ renderDeptList(); refreshMain(); }
+
+/* ---------- Init ---------- */
+(async function init(){
+  await loadState();
+  setupAutosave();
+  renderDeptList();
+  currentDeptId = state.company.departments[0]?.id || null;
+  refreshMain();
+  applyPersona();
+  log("Loaded.");
+})();
+</script>
+</body>
+</html>
